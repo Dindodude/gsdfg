@@ -88,10 +88,11 @@ TWILIO_FROM_NUMBER=...
 3. Run `supabase/migrations/002_user_profile_insert_policy.sql`.
 4. Run `supabase/migrations/003_suppression_and_email_events.sql`.
 5. Run `supabase/migrations/004_lead_targeting_metadata.sql`.
-6. Add Supabase environment variables to `.env.local` and Vercel.
-7. Restart the local dev server.
-8. Visit `/login` and create/sign in to an account.
-9. Optionally adapt `supabase/seed.sql` with a real user id to add starter leads/agents.
+6. Run `supabase/migrations/005_lead_dedupe_index.sql`.
+7. Add Supabase environment variables to `.env.local` and Vercel.
+8. Restart the local dev server.
+9. Visit `/login` and create/sign in to an account.
+10. Optionally adapt `supabase/seed.sql` with a real user id to add starter leads/agents.
 
 The schema includes:
 

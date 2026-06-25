@@ -10,7 +10,13 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 
 function leadFinderErrorMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message =
+    error instanceof Error
+      ? error.message
+      : error && typeof error === "object" && "message" in error
+        ? String(error.message)
+        : String(error);
+  const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
 
   if (message.includes("GOOGLE_PLACES_API_KEY")) {
     return "GOOGLE_PLACES_API_KEY is missing in Vercel.";
@@ -28,7 +34,19 @@ function leadFinderErrorMessage(error: unknown) {
     return "OPENAI_API_KEY is missing, so found leads could not be scored.";
   }
 
-  return "Lead finding failed. Check Vercel logs for the server error.";
+  if (message.includes("google_review_count") || message.includes("has_website") || message.includes("external_source_id")) {
+    return "Supabase migration 004 is missing. Run supabase/migrations/004_lead_targeting_metadata.sql, then redeploy.";
+  }
+
+  if (message.includes("ON CONFLICT") || code === "42P10") {
+    return "Supabase lead dedupe index is missing or outdated. Run the latest Supabase migrations, then redeploy.";
+  }
+
+  if (message && message !== "[object Object]") {
+    return message;
+  }
+
+  return "Lead finding failed. Check Supabase migrations and Vercel environment variables.";
 }
 
 export async function POST(request: Request) {
@@ -59,9 +77,22 @@ export async function POST(request: Request) {
       });
     }
 
+    const externalSourceIds = foundLeads.map((lead) => lead.externalSourceId).filter((id): id is string => Boolean(id));
+
+    if (externalSourceIds.length > 0) {
+      const { error: dedupeDeleteError } = await supabase
+        .from("leads")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("source", "Google Places Text Search")
+        .in("external_source_id", externalSourceIds);
+
+      if (dedupeDeleteError) throw dedupeDeleteError;
+    }
+
     const { data, error } = await supabase
       .from("leads")
-      .upsert(
+      .insert(
         foundLeads.map((lead) => ({
           user_id: user.id,
           business_name: lead.businessName,
@@ -83,7 +114,6 @@ export async function POST(request: Request) {
           compliance_status: "Pending",
           estimated_value: lead.estimatedValue,
         })),
-        { onConflict: "user_id,source,external_source_id" },
       )
       .select("*");
 
