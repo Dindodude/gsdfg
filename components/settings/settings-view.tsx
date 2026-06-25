@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { CheckCircle2, Database, KeyRound, Mail, Save, ShieldCheck, Smartphone, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,48 @@ const envVars = [
   "NEXT_PUBLIC_APP_URL",
 ];
 
+type OpenAIStatus = {
+  configured: boolean;
+  mode: "mock" | "live";
+  model: string;
+};
+
 export function SettingsView({ settings, source }: { settings: Settings; source: "supabase" | "mock" }) {
+  const [openAIStatus, setOpenAIStatus] = React.useState<OpenAIStatus | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadOpenAIStatus() {
+      try {
+        const response = await fetch("/api/openai/status", { cache: "no-store" });
+        const payload = (await response.json()) as { ok: boolean; data?: OpenAIStatus };
+
+        if (!cancelled && payload.ok && payload.data) {
+          setOpenAIStatus(payload.data);
+        }
+      } catch {
+        if (!cancelled) {
+          setOpenAIStatus({ configured: false, mode: "mock", model: "unknown" });
+        }
+      }
+    }
+
+    void loadOpenAIStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const openAIIntegrationStatus = openAIStatus
+    ? openAIStatus.mode === "live"
+      ? `Live: ${openAIStatus.model}`
+      : openAIStatus.configured
+        ? "Key set, mock mode"
+        : "Mock until key"
+    : "Checking";
+
   return (
     <div className="space-y-6">
       <Card className="glass-strong">
@@ -104,7 +146,7 @@ export function SettingsView({ settings, source }: { settings: Settings; source:
         </div>
 
         <div className="space-y-4">
-          <IntegrationCard icon={KeyRound} title="OpenAI" description="Structured JSON agent outputs with retry, usage, and mock fallback." status="Mock until key" />
+          <IntegrationCard icon={KeyRound} title="OpenAI" description="Structured JSON agent outputs with retry, usage, and mock fallback." status={openAIIntegrationStatus} />
           <IntegrationCard icon={Database} title="Supabase" description="Database, auth, storage-ready architecture, migrations, RLS policies." status="Schema ready" />
           <IntegrationCard icon={Mail} title="Resend / SendGrid" description="Resend adapter is implemented. SendGrid key slot is documented for future swap." status="Email-ready" />
           <IntegrationCard icon={Smartphone} title="Twilio SMS" description="Server-side SMS adapter returns mock SID without credentials." status="SMS-ready" />
