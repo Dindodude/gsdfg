@@ -44,8 +44,10 @@ export function WebsitesView({ websiteProjects, leads }: { websiteProjects: Webs
     });
     setLoading(null);
 
-    if (!response.ok) {
-      toast.error("Website generation failed");
+    const body = await response.json();
+
+    if (!response.ok || !body.ok) {
+      toast.error("Website generation failed", { description: body.error ?? "Check API configuration and logs." });
       return;
     }
 
@@ -67,8 +69,10 @@ export function WebsitesView({ websiteProjects, leads }: { websiteProjects: Webs
     });
     setLoading(null);
 
-    if (!response.ok) {
-      toast.error("QA review failed");
+    const body = await response.json();
+
+    if (!response.ok || !body.ok) {
+      toast.error("QA review failed", { description: body.error ?? "Check API configuration and logs." });
       return;
     }
 
@@ -91,12 +95,13 @@ export function WebsitesView({ websiteProjects, leads }: { websiteProjects: Webs
     });
     setLoading(null);
 
-    if (!response.ok) {
-      toast.error("Compliance review failed");
+    const body = await response.json();
+
+    if (!response.ok || !body.ok) {
+      toast.error("Compliance review failed", { description: body.error ?? "Check API configuration and logs." });
       return;
     }
 
-    const body = await response.json();
     toast.success(body.data?.blocked ? "Compliance blocked delivery" : "Compliance review saved");
     router.refresh();
   }
@@ -116,12 +121,13 @@ export function WebsitesView({ websiteProjects, leads }: { websiteProjects: Webs
     });
     setLoading(null);
 
-    if (!response.ok) {
-      toast.error("Delivery prep failed");
+    const body = await response.json();
+
+    if (!response.ok || !body.ok) {
+      toast.error("Delivery prep failed", { description: body.error ?? "Check API configuration and logs." });
       return;
     }
 
-    const body = await response.json();
     if (body.data?.blocked) {
       toast.error("Delivery blocked", { description: body.data.reason });
       return;

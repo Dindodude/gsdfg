@@ -55,6 +55,22 @@ export function rateLimitPlaceholder(identifier: string) {
 
 export function safeError(error: unknown) {
   if (error instanceof Error) {
+    const operationalPrefixes = [
+      "OPENAI_API_KEY is required",
+      "GOOGLE_PLACES_API_KEY is required",
+      "RESEND_API_KEY is required",
+      "Twilio credentials are required",
+      "Supabase auth is required",
+      "Supabase is required",
+      "Agent returned an empty response",
+      "Agent returned non-JSON content",
+      "Agent ",
+    ];
+
+    if (operationalPrefixes.some((prefix) => error.message.startsWith(prefix))) {
+      return error.message;
+    }
+
     return process.env.NODE_ENV === "development" ? error.message : "Request failed.";
   }
 

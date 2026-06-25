@@ -1,7 +1,8 @@
 import OpenAI from "openai";
+import { zodResponseFormat } from "openai/helpers/zod";
 import { env } from "@/lib/env";
 import { getAgentPrompt } from "@/lib/agents/prompts";
-import { validateAgentOutput } from "@/lib/agents/output-schemas";
+import { agentOutputSchemas, validateAgentOutput } from "@/lib/agents/output-schemas";
 import type { AgentKey, AgentResponse, Lead } from "@/lib/types";
 import { auditLog, createAuditId, sanitizeInput } from "@/lib/security";
 import { createClient } from "@/lib/supabase/server";
@@ -79,7 +80,7 @@ export async function runAgent<T = unknown>(input: RunAgentInput): Promise<Agent
   const completion = await withRetry(() =>
     client.chat.completions.create({
       model: env.openaiModel,
-      response_format: { type: "json_object" },
+      response_format: zodResponseFormat(agentOutputSchemas[cleanInput.agent], cleanInput.agent.replaceAll("-", "_")),
       messages: [
         {
           role: "system",

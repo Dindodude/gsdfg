@@ -51,12 +51,13 @@ export function OutreachView({
     });
     setLoading(null);
 
-    if (!response.ok) {
-      toast.error("Outreach generation failed");
+    const body = await response.json();
+
+    if (!response.ok || !body.ok) {
+      toast.error("Outreach generation failed", { description: body.error ?? "Check API configuration and logs." });
       return;
     }
 
-    const body = await response.json();
     toast.success(body.data?.blocked ? "Outreach generated but blocked" : "Outreach saved", {
       description: body.data?.blocked ? "Compliance found a blocking issue." : "Drafts and compliance review were saved to Supabase.",
     });
@@ -72,8 +73,10 @@ export function OutreachView({
     });
     setLoading(null);
 
-    if (!response.ok) {
-      toast.error("Reply classification failed");
+    const body = await response.json();
+
+    if (!response.ok || !body.ok) {
+      toast.error("Reply classification failed", { description: body.error ?? "Check API configuration and logs." });
       return;
     }
 
