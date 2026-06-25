@@ -68,8 +68,11 @@ TWILIO_FROM_NUMBER=...
 
 1. Create a Supabase project.
 2. Run `supabase/migrations/001_initial_schema.sql`.
-3. Optionally adapt `supabase/seed.sql` with a real `:user_id`.
+3. Run `supabase/migrations/002_user_profile_insert_policy.sql`.
 4. Add Supabase environment variables to `.env.local` and Vercel.
+5. Restart the local dev server.
+6. Visit `/login` and create/sign in to an account.
+7. Optionally adapt `supabase/seed.sql` with a real user id to add starter leads/agents.
 
 The schema includes:
 
@@ -87,6 +90,16 @@ The schema includes:
 - `settings`
 
 RLS is enabled across tables with owner-scoped policies.
+
+The app uses `@supabase/ssr` for App Router auth:
+
+- `proxy.ts` refreshes sessions and protects dashboard routes.
+- `/login` supports email/password sign in and sign up.
+- `/auth/callback` handles email confirmation or OAuth callbacks.
+- `/logout` signs the owner out.
+- `/api/auth/bootstrap-user` creates the matching `public.users` profile.
+
+When Supabase is configured and a user is signed in, dashboard pages read live rows from Supabase. If Supabase is missing or a query fails, the app falls back to mock data so local development does not collapse into a sad little puddle.
 
 ## OpenAI Agent System
 

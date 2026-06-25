@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { leads, workflowStages } from "@/lib/mock-data";
+import { workflowStages } from "@/lib/mock-data";
+import type { Lead } from "@/lib/types";
 import { complianceTone, formatCurrency, scoreTone, statusTone } from "@/lib/utils";
 
 const workflowSteps = [
@@ -21,7 +22,7 @@ const workflowSteps = [
   { label: "Client Preview", icon: CheckCircle2 },
 ];
 
-export function PipelineView() {
+export function PipelineView({ leads }: { leads: Lead[] }) {
   return (
     <div className="space-y-6">
       <Card className="glass-strong">

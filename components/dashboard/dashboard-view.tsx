@@ -18,37 +18,59 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  activityLogs,
-  agentRuns,
-  complianceReviews,
-  funnelData,
-  leads,
-  outreachMessages,
-  revenueSeries,
-  tasks,
-  websiteProjects,
-  workflowStages,
-} from "@/lib/mock-data";
+import { workflowStages } from "@/lib/mock-data";
+import type { ActivityLog, AgentRun, ComplianceReview, Lead, OutreachMessage, Task, WebsiteProject } from "@/lib/types";
 import { cn, complianceTone, formatCurrency, formatDate, riskTone, statusTone } from "@/lib/utils";
 
-const interestedLeads = leads.filter((lead) => ["Interested", "Owner Talking", "Send to Website Team"].includes(lead.status));
-const websitesInProgress = websiteProjects.filter((project) => ["Intake", "In Progress", "QA Review", "Compliance Review"].includes(project.status));
-const websitesCompleted = websiteProjects.filter((project) => ["Client Preview Ready", "Delivered"].includes(project.status));
-const outreachSent = outreachMessages.filter((message) => message.status === "Sent").length;
-const replyRate = Math.round((5 / Math.max(outreachSent, 1)) * 100);
-const revenueEstimate = leads.reduce((sum, lead) => sum + lead.estimatedValue, 0);
-
-const metrics = [
-  { label: "Total leads", value: leads.length.toString(), change: "+25 this batch", icon: UsersRound },
-  { label: "Interested leads", value: interestedLeads.length.toString(), change: "Owner action needed", icon: MousePointer2 },
-  { label: "Websites in progress", value: websitesInProgress.length.toString(), change: "AI team active", icon: Bot },
-  { label: "Websites completed", value: websitesCompleted.length.toString(), change: "Ready for preview", icon: CheckCircle2 },
-  { label: "Outreach sent", value: outreachSent.toString(), change: `${replyRate}% reply rate`, icon: MailCheck },
-  { label: "Revenue estimate", value: formatCurrency(revenueEstimate), change: "Weighted pipeline", icon: DollarSign },
-];
-
-export function DashboardView() {
+export function DashboardView({
+  leads,
+  websiteProjects,
+  outreachMessages,
+  agentRuns,
+  complianceReviews,
+  tasks,
+  activityLogs,
+  source,
+}: {
+  leads: Lead[];
+  websiteProjects: WebsiteProject[];
+  outreachMessages: OutreachMessage[];
+  agentRuns: AgentRun[];
+  complianceReviews: ComplianceReview[];
+  tasks: Task[];
+  activityLogs: ActivityLog[];
+  source: "supabase" | "mock";
+}) {
+  const interestedLeads = leads.filter((lead) => ["Interested", "Owner Talking", "Send to Website Team"].includes(lead.status));
+  const websitesInProgress = websiteProjects.filter((project) => ["Intake", "In Progress", "QA Review", "Compliance Review"].includes(project.status));
+  const websitesCompleted = websiteProjects.filter((project) => ["Client Preview Ready", "Delivered"].includes(project.status));
+  const outreachSent = outreachMessages.filter((message) => message.status === "Sent").length;
+  const replyRate = Math.round((5 / Math.max(outreachSent, 1)) * 100);
+  const revenueEstimate = leads.reduce((sum, lead) => sum + lead.estimatedValue, 0);
+  const funnelData = [
+    { name: "Leads", value: leads.length },
+    { name: "Scored", value: leads.filter((lead) => lead.leadScore > 0).length },
+    { name: "Outreach", value: leads.filter((lead) => ["Outreach Ready", "Outreach Sent", "Replied", "Interested", "Owner Talking"].includes(lead.status)).length },
+    { name: "Interested", value: interestedLeads.length },
+    { name: "Websites", value: websiteProjects.length },
+    { name: "Won", value: leads.filter((lead) => lead.status === "Closed Won").length },
+  ];
+  const revenueSeries = [
+    { month: "Jan", value: 11800 },
+    { month: "Feb", value: 16400 },
+    { month: "Mar", value: 22100 },
+    { month: "Apr", value: 29800 },
+    { month: "May", value: 38200 },
+    { month: "Jun", value: revenueEstimate },
+  ];
+  const metrics = [
+    { label: "Total leads", value: leads.length.toString(), change: source === "supabase" ? "Live database" : "+25 mock batch", icon: UsersRound },
+    { label: "Interested leads", value: interestedLeads.length.toString(), change: "Owner action needed", icon: MousePointer2 },
+    { label: "Websites in progress", value: websitesInProgress.length.toString(), change: "AI team active", icon: Bot },
+    { label: "Websites completed", value: websitesCompleted.length.toString(), change: "Ready for preview", icon: CheckCircle2 },
+    { label: "Outreach sent", value: outreachSent.toString(), change: `${replyRate}% reply rate`, icon: MailCheck },
+    { label: "Revenue estimate", value: formatCurrency(revenueEstimate), change: "Weighted pipeline", icon: DollarSign },
+  ];
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">

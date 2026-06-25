@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { complianceReviews } from "@/lib/mock-data";
+import type { ComplianceReview } from "@/lib/types";
 import { cn, formatDate, riskTone } from "@/lib/utils";
 
 const statusTone = {
@@ -17,7 +17,7 @@ const statusTone = {
 
 const reviewTypes = ["Outreach messages", "Website content", "Contact forms", "Privacy policy needs", "Terms/disclaimer needs"];
 
-export function ComplianceView() {
+export function ComplianceView({ complianceReviews }: { complianceReviews: ComplianceReview[] }) {
   const highRisk = complianceReviews.filter((review) => review.riskLevel === "High");
   const mediumRisk = complianceReviews.filter((review) => review.riskLevel === "Medium");
   const lowRisk = complianceReviews.filter((review) => review.riskLevel === "Low");

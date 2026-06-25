@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { websiteProjects } from "@/lib/mock-data";
+import type { WebsiteProject } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const statusTone = {
@@ -21,10 +21,30 @@ const statusTone = {
   Delivered: "border-emerald-300/30 bg-emerald-300/10 text-emerald-100",
 };
 
-export function WebsitesView() {
-  const [projectId, setProjectId] = React.useState(websiteProjects[0].id);
+export function WebsitesView({ websiteProjects }: { websiteProjects: WebsiteProject[] }) {
+  const [projectId, setProjectId] = React.useState(websiteProjects[0]?.id ?? "");
   const project = websiteProjects.find((item) => item.id === projectId) ?? websiteProjects[0];
-  const activePage = project.pages[0];
+  const activePage = project?.pages[0];
+
+  if (!project || !activePage) {
+    return (
+      <div className="space-y-6">
+        <Card className="glass-strong">
+          <CardContent className="p-6 sm:p-7">
+            <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
+              <Layers3 className="h-3.5 w-3.5" />
+              Website team workspace
+            </Badge>
+            <h2 className="mt-4 text-3xl font-semibold tracking-normal text-zinc-50">No website projects yet.</h2>
+            <p className="mt-3 text-sm leading-6 text-zinc-400">
+              Once a lead is sent to the website team, generated pages and previews will appear here.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const exportSnippet = `export default function ${project.leadName.replace(/[^a-zA-Z0-9]/g, "")}HomePage() {
   return (
     <main>

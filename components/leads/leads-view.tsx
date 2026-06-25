@@ -8,15 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { leads } from "@/lib/mock-data";
+import type { Lead } from "@/lib/types";
 import { cn, complianceTone, formatCurrency, formatDate, scoreTone, statusTone } from "@/lib/utils";
 
-const priorityLeads = [...leads].sort((a, b) => b.leadScore - a.leadScore).slice(0, 6);
-
-export function LeadsView() {
+export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase" | "mock" }) {
   const [query, setQuery] = React.useState("");
   const [status, setStatus] = React.useState("All");
-  const [selectedLeadId, setSelectedLeadId] = React.useState(priorityLeads[0]?.id ?? leads[0].id);
+  const priorityLeads = React.useMemo(() => [...leads].sort((a, b) => b.leadScore - a.leadScore).slice(0, 6), [leads]);
+  const [selectedLeadId, setSelectedLeadId] = React.useState(priorityLeads[0]?.id ?? leads[0]?.id ?? "");
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) ?? leads[0];
 
   const statuses = ["All", ...Array.from(new Set(leads.map((lead) => lead.status)))];
@@ -36,7 +35,7 @@ export function LeadsView() {
               <div className="max-w-3xl">
                 <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
                   <DatabaseZap className="h-3.5 w-3.5" />
-                  25 seeded leads
+                  {source === "supabase" ? "Live Supabase leads" : "25 seeded leads"}
                 </Badge>
                 <h2 className="mt-4 text-3xl font-semibold tracking-normal text-zinc-50">Lead database built for autonomous qualification.</h2>
                 <p className="mt-3 text-sm leading-6 text-zinc-400">
@@ -164,6 +163,7 @@ export function LeadsView() {
         </Card>
 
         <div className="space-y-4">
+          {selectedLead ? (
           <Card>
             <CardHeader>
               <CardTitle>Owner Control Panel</CardTitle>
@@ -199,7 +199,21 @@ export function LeadsView() {
               </div>
             </CardContent>
           </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>No Leads Yet</CardTitle>
+                <CardDescription>Add leads in Supabase or use the import flow once persistence writes are enabled.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-[8px] border border-dashed border-white/12 bg-white/[0.03] p-6 text-sm leading-6 text-zinc-400">
+                  Your authenticated workspace is connected, but the `leads` table has no rows for this user yet.
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
+          {selectedLead ? (
           <Card>
             <CardHeader>
               <CardTitle>Selected Lead Details</CardTitle>
@@ -212,6 +226,7 @@ export function LeadsView() {
               <Detail icon={DatabaseZap} label="Social links" value={selectedLead.socialLinks.join(", ") || "None"} />
             </CardContent>
           </Card>
+          ) : null}
         </div>
       </section>
     </div>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { leads, outreachMessages, replies } from "@/lib/mock-data";
+import type { Lead, OutreachMessage, Reply } from "@/lib/types";
 import { cn, complianceTone, formatDate, statusTone } from "@/lib/utils";
 
 const channelIcon = {
@@ -17,10 +17,18 @@ const channelIcon = {
   DM: MessageSquareReply,
 };
 
-export function OutreachView() {
-  const [selectedLead, setSelectedLead] = React.useState("lead-010");
+export function OutreachView({
+  leads,
+  outreachMessages,
+  replies,
+}: {
+  leads: Lead[];
+  outreachMessages: OutreachMessage[];
+  replies: Reply[];
+}) {
+  const [selectedLead, setSelectedLead] = React.useState(leads[0]?.id ?? "");
   const lead = leads.find((item) => item.id === selectedLead) ?? leads[0];
-  const leadMessages = outreachMessages.filter((message) => message.leadId === lead.id);
+  const leadMessages = lead ? outreachMessages.filter((message) => message.leadId === lead.id) : [];
 
   return (
     <div className="space-y-6">
@@ -67,6 +75,7 @@ export function OutreachView() {
                     </option>
                   ))}
               </select>
+              {lead ? (
               <div className="rounded-[8px] border border-white/10 bg-white/5 p-4">
                 <p className="text-sm font-medium text-zinc-100">{lead.businessName}</p>
                 <p className="mt-1 text-xs text-zinc-500">
@@ -77,8 +86,9 @@ export function OutreachView() {
                   <Badge className={complianceTone(lead.complianceStatus)}>{lead.complianceStatus}</Badge>
                 </div>
               </div>
+              ) : null}
               <Input value="Conversion-first local website angle" readOnly />
-              <Textarea defaultValue={`Use ${lead.businessName}'s website quality score and Google presence to write specific, respectful outreach. Include sender identity and opt-out language.`} />
+              <Textarea defaultValue={lead ? `Use ${lead.businessName}'s website quality score and Google presence to write specific, respectful outreach. Include sender identity and opt-out language.` : "Add leads first, then generate compliant outreach."} />
               <Button className="w-full" onClick={() => toast.success("Mock outreach ready", { description: "Email, SMS, follow-ups, DM, and compliance checklist created." })}>
                 <Send className="h-4 w-4" />
                 Generate + Review Compliance
@@ -152,6 +162,11 @@ export function OutreachView() {
                   </div>
                 );
               })}
+              {outreachMessages.length === 0 ? (
+                <div className="rounded-[8px] border border-dashed border-white/12 bg-white/[0.03] p-6 text-sm text-zinc-500">
+                  No outreach messages saved yet.
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 

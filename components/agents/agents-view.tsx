@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { agentDefinitions, agentRuns } from "@/lib/mock-data";
 import { agentPrompts } from "@/lib/agents/prompts";
+import type { AgentDefinition, AgentRun } from "@/lib/types";
 import { cn, formatDate, riskTone } from "@/lib/utils";
 
 const statusTone = {
@@ -18,7 +18,15 @@ const statusTone = {
   Blocked: "border-rose-400/40 bg-rose-500/15 text-rose-100",
 };
 
-export function AgentsView() {
+export function AgentsView({
+  agentDefinitions,
+  agentRuns,
+  source,
+}: {
+  agentDefinitions: AgentDefinition[];
+  agentRuns: AgentRun[];
+  source: "supabase" | "mock";
+}) {
   return (
     <div className="space-y-6">
       <Card className="glass-strong">
@@ -27,7 +35,7 @@ export function AgentsView() {
             <div className="max-w-4xl">
               <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
                 <Sparkles className="h-3.5 w-3.5" />
-                11-agent operating system
+                {source === "supabase" ? "Live agent registry" : "11-agent operating system"}
               </Badge>
               <h2 className="mt-4 text-3xl font-semibold tracking-normal text-zinc-50">Specialized agents handle lead acquisition through delivery.</h2>
               <p className="mt-3 text-sm leading-6 text-zinc-400">

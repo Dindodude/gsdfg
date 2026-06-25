@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { complianceReviews, tasks } from "@/lib/mock-data";
+import type { ComplianceReview, Task } from "@/lib/types";
 import { cn, formatDate, priorityTone, riskTone } from "@/lib/utils";
 
-export function TasksView() {
+export function TasksView({ tasks, complianceReviews }: { tasks: Task[]; complianceReviews: ComplianceReview[] }) {
   const openTasks = tasks.filter((task) => task.status !== "Done");
   const warningReviews = complianceReviews.filter((review) => review.status !== "Approved");
 

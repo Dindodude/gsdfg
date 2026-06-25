@@ -11,7 +11,15 @@ import { CommandPalette } from "@/components/layout/command-palette";
 import { navigation } from "@/components/layout/navigation";
 import { cn } from "@/lib/utils";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  userEmail,
+  dataSource = "mock",
+}: {
+  children: React.ReactNode;
+  userEmail?: string | null;
+  dataSource?: "supabase" | "mock";
+}) {
   const pathname = usePathname();
   const [commandOpen, setCommandOpen] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -80,6 +88,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Button variant="secondary" size="icon" aria-label="Notifications" onClick={() => toast.info("No new system alerts")}>
                 <Bell className="h-4 w-4" />
               </Button>
+              <a
+                href="/logout"
+                className="hidden rounded-[8px] border border-white/10 bg-white/7 px-3 py-2 text-xs text-zinc-300 transition hover:bg-white/10 hover:text-white xl:block"
+              >
+                {userEmail ?? (dataSource === "supabase" ? "Sign out" : "Mock mode")}
+              </a>
               <Button variant="secondary" className="hidden md:inline-flex" onClick={queueAgents}>
                 <Sparkles className="h-4 w-4" />
                 Run Agents
