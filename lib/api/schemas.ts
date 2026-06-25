@@ -55,6 +55,12 @@ export const leadScoreSchema = z.object({
   lead: leadCreateSchema.partial().optional(),
 });
 
+export const leadFindSchema = z.object({
+  industry: z.string().min(2).default("barber shop"),
+  city: z.string().min(2).default("Hamilton, ON"),
+  limit: z.number().int().min(1).max(20).default(10),
+});
+
 export const outreachGenerateSchema = z.object({
   leadId: z.string(),
   strategy: z.record(z.string(), z.unknown()).optional(),

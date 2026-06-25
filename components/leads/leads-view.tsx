@@ -17,6 +17,8 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
   const [query, setQuery] = React.useState("");
   const [status, setStatus] = React.useState("All");
   const [loading, setLoading] = React.useState<string | null>(null);
+  const [finderIndustry, setFinderIndustry] = React.useState("barber shop");
+  const [finderCity, setFinderCity] = React.useState("Hamilton, ON");
   const priorityLeads = React.useMemo(() => [...leads].sort((a, b) => b.leadScore - a.leadScore).slice(0, 6), [leads]);
   const [selectedLeadId, setSelectedLeadId] = React.useState(priorityLeads[0]?.id ?? leads[0]?.id ?? "");
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) ?? leads[0];
@@ -70,6 +72,31 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
     router.refresh();
   }
 
+  async function findLeads() {
+    setLoading("find");
+    const response = await fetch("/api/leads/find", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        industry: finderIndustry,
+        city: finderCity,
+        limit: 10,
+      }),
+    });
+    const body = await response.json();
+    setLoading(null);
+
+    if (!response.ok || !body.ok) {
+      toast.error("Lead finding failed", { description: body.error ?? "Check Google Places and Supabase configuration." });
+      return;
+    }
+
+    toast.success("Leads found", {
+      description: `${body.data?.inserted ?? 0} saved from Google Places. Top leads were scored with OpenAI.`,
+    });
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1fr_360px]">
@@ -87,13 +114,25 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
+                <Input
+                  className="w-40"
+                  value={finderIndustry}
+                  onChange={(event) => setFinderIndustry(event.target.value)}
+                  placeholder="Industry"
+                />
+                <Input
+                  className="w-44"
+                  value={finderCity}
+                  onChange={(event) => setFinderCity(event.target.value)}
+                  placeholder="City"
+                />
                 <Button variant="secondary" onClick={() => toast.info("Manual import drawer is ready for persistence wiring")}>
                   <Plus className="h-4 w-4" />
                   Import Lead
                 </Button>
-                <Button onClick={() => toast.success("Lead Finder Agent queued", { description: "OpenAI will generate structured lead records." })}>
+                <Button disabled={loading === "find"} onClick={findLeads}>
                   <Sparkles className="h-4 w-4" />
-                  Generate Leads
+                  {loading === "find" ? "Finding..." : "Generate Leads"}
                 </Button>
               </div>
             </div>

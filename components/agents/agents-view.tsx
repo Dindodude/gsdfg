@@ -47,7 +47,7 @@ export function AgentsView({
                 <FileJson className="h-4 w-4" />
                 Prompt Registry
               </Button>
-              <Button onClick={() => toast.success("Agent team queued", { description: "OpenAI will return structured JSON for every agent." })}>
+              <Button onClick={() => toast.info("Run agents from a lead record", { description: "Use Leads to find businesses, score them, generate outreach, and hand off website work." })}>
                 <Play className="h-4 w-4" />
                 Run Agents
               </Button>
@@ -101,7 +101,7 @@ export function AgentsView({
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs text-zinc-500">Last run {formatDate(agent.lastRun)}</p>
-                  <Button size="sm" variant={isCompliance ? "danger" : "secondary"} onClick={() => toast.success(`${agent.name} queued`)}>
+                  <Button size="sm" variant={isCompliance ? "danger" : "secondary"} onClick={() => toast.info(`${agent.name} runs from the relevant workflow page`)}>
                     <Zap className="h-3.5 w-3.5" />
                     Run
                   </Button>

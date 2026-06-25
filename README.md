@@ -40,6 +40,14 @@ OPENAI_API_KEY=...
 OPENAI_MODEL=gpt-4.1-mini
 ```
 
+Lead sourcing:
+
+```bash
+GOOGLE_PLACES_API_KEY=...
+```
+
+The Lead Finder uses Google Places Text Search to find real businesses by industry and city, saves them to Supabase, then scores the top results with OpenAI.
+
 Supabase:
 
 ```bash
@@ -170,6 +178,7 @@ All routes include Zod validation, sanitization, safe errors, audit logging, and
 - `POST /api/agents/run`
 - `GET /api/leads`
 - `POST /api/leads`
+- `POST /api/leads/find`
 - `POST /api/leads/score`
 - `POST /api/outreach/generate`
 - `POST /api/outreach/send`
