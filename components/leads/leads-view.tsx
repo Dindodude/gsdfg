@@ -16,6 +16,7 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
   const router = useRouter();
   const [query, setQuery] = React.useState("");
   const [status, setStatus] = React.useState("All");
+  const [targetOnly, setTargetOnly] = React.useState(true);
   const [loading, setLoading] = React.useState<string | null>(null);
   const [finderIndustry, setFinderIndustry] = React.useState("barber shop");
   const [finderCity, setFinderCity] = React.useState("Hamilton, ON");
@@ -28,7 +29,10 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
     const haystack = `${lead.businessName} ${lead.industry} ${lead.city} ${lead.email}`.toLowerCase();
     const matchesQuery = haystack.includes(query.toLowerCase());
     const matchesStatus = status === "All" || lead.status === status;
-    return matchesQuery && matchesStatus;
+    const hasWebsite = lead.hasWebsite ?? Boolean(lead.websiteUrl);
+    const reviewCount = lead.googleReviewCount;
+    const matchesTarget = !targetOnly || (reviewCount !== null && reviewCount !== undefined && reviewCount >= 100 && reviewCount <= 200 && !hasWebsite);
+    return matchesQuery && matchesStatus && matchesTarget;
   });
 
   async function scoreLead() {
@@ -208,6 +212,9 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
                     ))}
                   </select>
                 </div>
+                <Button variant={targetOnly ? "default" : "secondary"} onClick={() => setTargetOnly((value) => !value)}>
+                  {targetOnly ? "Target Only" : "All Leads"}
+                </Button>
               </div>
             </div>
           </CardHeader>

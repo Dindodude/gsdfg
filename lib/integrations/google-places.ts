@@ -70,25 +70,33 @@ function isTargetPlace(place: GooglePlace) {
   return reviewCount >= 100 && reviewCount <= 200 && !hasWebsite && !isClosed;
 }
 
-export async function findPlacesLeads(input: {
-  industry: string;
-  city: string;
-  limit: number;
-}): Promise<FoundLead[]> {
-  if (!env.googlePlacesApiKey) {
-    throw new Error("GOOGLE_PLACES_API_KEY is required for automatic lead finding.");
+function leadSearchQueries(industry: string, city: string) {
+  const base = [
+    `${industry} in ${city}`,
+    `${industry} near ${city}`,
+    `best ${industry} ${city}`,
+    `local ${industry} ${city}`,
+  ];
+  const lowerIndustry = industry.toLowerCase();
+
+  if (lowerIndustry.includes("barber")) {
+    base.push(`barbershop ${city}`, `men's haircut ${city}`, `fade haircut ${city}`);
   }
 
+  return Array.from(new Set(base));
+}
+
+async function searchPlacesText(query: string, apiKey: string) {
   const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Goog-Api-Key": env.googlePlacesApiKey,
+      "X-Goog-Api-Key": apiKey,
       "X-Goog-FieldMask":
         "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.internationalPhoneNumber,places.googleMapsUri,places.rating,places.userRatingCount,places.businessStatus,places.types",
     },
     body: JSON.stringify({
-      textQuery: `${input.industry} in ${input.city}`,
+      textQuery: query,
       pageSize: 20,
     }),
   });
@@ -99,7 +107,28 @@ export async function findPlacesLeads(input: {
   }
 
   const payload = (await response.json()) as GooglePlacesTextSearchResponse;
-  return (payload.places ?? []).filter(isTargetPlace).slice(0, input.limit).map((place) => {
+  return payload.places ?? [];
+}
+
+export async function findPlacesLeads(input: {
+  industry: string;
+  city: string;
+  limit: number;
+}): Promise<FoundLead[]> {
+  if (!env.googlePlacesApiKey) {
+    throw new Error("GOOGLE_PLACES_API_KEY is required for automatic lead finding.");
+  }
+
+  const placesById = new Map<string, GooglePlace>();
+  for (const query of leadSearchQueries(input.industry, input.city)) {
+    const places = await searchPlacesText(query, env.googlePlacesApiKey);
+    places.forEach((place) => {
+      const key = place.id ?? `${place.displayName?.text}-${place.formattedAddress}`;
+      placesById.set(key, place);
+    });
+  }
+
+  return Array.from(placesById.values()).filter(isTargetPlace).slice(0, input.limit).map((place) => {
     const businessName = place.displayName?.text ?? "Unnamed business";
     const phone = place.nationalPhoneNumber ?? place.internationalPhoneNumber ?? null;
     const websiteQuality = scoreWebsiteQuality(place);
