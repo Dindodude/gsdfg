@@ -50,10 +50,12 @@ MOCK_MODE=false
 Supabase:
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 ```
+
+`NEXT_PUBLIC_SUPABASE_URL` must be the Project URL from Supabase API settings. It is not the database connection string, not the REST URL with extra paths, and it must include `https://`.
 
 Email/SMS:
 
