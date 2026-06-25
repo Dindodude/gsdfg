@@ -43,6 +43,7 @@ Required for live OpenAI:
 
 ```bash
 OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4.1-mini
 MOCK_MODE=false
 ```
 
@@ -114,6 +115,7 @@ The runner provides:
 - Audit logging
 - Token usage placeholders
 - Cost logging placeholders
+- Zod validation for every agent response shape
 
 Agents implemented:
 
@@ -128,6 +130,16 @@ Agents implemented:
 - QA Agent
 - Security & Compliance Agent
 - Delivery Agent
+
+To turn live agents on locally:
+
+1. Add `OPENAI_API_KEY` to `.env.local`.
+2. Set `MOCK_MODE=false`.
+3. Optionally set `OPENAI_MODEL=gpt-4.1-mini`.
+4. Restart the dev server.
+5. Test `POST /api/agents/run` with a logged-in Supabase user.
+
+If the model returns malformed JSON or misses a required field, the request fails safely instead of saving bad data.
 
 ## Compliance Review
 

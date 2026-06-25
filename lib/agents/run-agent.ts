@@ -2,9 +2,12 @@ import OpenAI from "openai";
 import { env, isMockMode } from "@/lib/env";
 import { getMockAgentResult } from "@/lib/agents/mock-responses";
 import { getAgentPrompt } from "@/lib/agents/prompts";
+import { validateAgentOutput } from "@/lib/agents/output-schemas";
 import { leads } from "@/lib/mock-data";
 import type { AgentKey, AgentResponse, Lead } from "@/lib/types";
 import { auditLog, createAuditId, sanitizeInput } from "@/lib/security";
+import { createClient } from "@/lib/supabase/server";
+import { mapLead } from "@/lib/data/mappers";
 
 interface RunAgentInput {
   agent: AgentKey;
@@ -12,8 +15,20 @@ interface RunAgentInput {
   input?: Record<string, unknown>;
 }
 
-function getLead(leadId?: string): Lead | undefined {
+function getMockLead(leadId?: string): Lead | undefined {
   return leadId ? leads.find((lead) => lead.id === leadId) : undefined;
+}
+
+async function getLead(leadId?: string): Promise<Lead | undefined> {
+  if (!leadId) return undefined;
+
+  const supabase = await createClient();
+  if (supabase) {
+    const { data, error } = await supabase.from("leads").select("*").eq("id", leadId).maybeSingle();
+    if (!error && data) return mapLead(data);
+  }
+
+  return getMockLead(leadId);
 }
 
 function parseJson(content: string) {
@@ -47,7 +62,7 @@ export async function runAgent<T = unknown>(input: RunAgentInput): Promise<Agent
   const cleanInput = sanitizeInput(input);
   const auditId = createAuditId("agent");
   const prompt = getAgentPrompt(cleanInput.agent);
-  const lead = getLead(cleanInput.leadId);
+  const lead = await getLead(cleanInput.leadId);
   const mode = isMockMode() ? "mock" : "live";
 
   auditLog("agent_run_started", {
@@ -58,10 +73,10 @@ export async function runAgent<T = unknown>(input: RunAgentInput): Promise<Agent
   });
 
   if (mode === "mock") {
-    const result = getMockAgentResult(cleanInput.agent, {
+    const result = validateAgentOutput(cleanInput.agent, getMockAgentResult(cleanInput.agent, {
       lead,
       input: cleanInput.input,
-    }) as T;
+    })) as T;
 
     auditLog("agent_run_completed", {
       auditId,
@@ -94,12 +109,14 @@ export async function runAgent<T = unknown>(input: RunAgentInput): Promise<Agent
 
   const completion = await withRetry(() =>
     client.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: env.openaiModel,
       response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
-          content: `${prompt.system}\nReturn only valid JSON matching this shape: ${JSON.stringify(prompt.outputSchema)}`,
+          content: `${prompt.system}
+Return only valid JSON. Do not include markdown, prose, comments, or extra keys.
+The JSON must match this required shape: ${JSON.stringify(prompt.outputSchema)}`,
         },
         {
           role: "user",
@@ -114,7 +131,7 @@ export async function runAgent<T = unknown>(input: RunAgentInput): Promise<Agent
     throw new Error("Agent returned an empty response.");
   }
 
-  const result = parseJson(content) as T;
+  const result = validateAgentOutput(cleanInput.agent, parseJson(content)) as T;
   const promptTokens = completion.usage?.prompt_tokens ?? 0;
   const completionTokens = completion.usage?.completion_tokens ?? 0;
   const estimatedCostUsd = 0;
