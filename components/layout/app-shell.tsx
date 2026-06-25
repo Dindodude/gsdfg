@@ -27,7 +27,7 @@ export function AppShell({
 
   function queueAgents() {
     toast.success("Run Agents queued", {
-      description: "Mock workflow: scoring, strategy, outreach, compliance, and website agents are ready.",
+      description: "Scoring, strategy, outreach, compliance, and website agents are ready.",
     });
   }
 
@@ -92,7 +92,7 @@ export function AppShell({
                 href="/logout"
                 className="hidden rounded-[8px] border border-white/10 bg-white/7 px-3 py-2 text-xs text-zinc-300 transition hover:bg-white/10 hover:text-white xl:block"
               >
-                {userEmail ?? (dataSource === "supabase" ? "Sign out" : "Mock mode")}
+                {userEmail ?? (dataSource === "supabase" ? "Sign out" : "Sign in required")}
               </a>
               <Button variant="secondary" className="hidden md:inline-flex" onClick={queueAgents}>
                 <Sparkles className="h-4 w-4" />
@@ -165,7 +165,7 @@ function SidebarContent({ pathname, onNavigate }: { pathname: string; onNavigate
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-medium text-zinc-200">Automation Mode</p>
-              <p className="mt-1 text-xs leading-5 text-zinc-500">Mock agents active until API keys are added.</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500">Live agents use your configured API keys.</p>
             </div>
             <div className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
           </div>

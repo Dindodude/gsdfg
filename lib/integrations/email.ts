@@ -10,14 +10,14 @@ export async function sendEmailReadyMessage(input: {
   text: string;
 }) {
   if (!env.resendApiKey) {
-    auditLog("email_mock_send", {
+    auditLog("email_send_missing_credentials", {
       provider: "resend",
       to: input.to,
       subject: input.subject,
-      todo: "Set RESEND_API_KEY or wire SendGrid with SENDGRID_API_KEY.",
+      required: "RESEND_API_KEY",
     });
 
-    return { mode: "mock" as const, id: `mock-email-${crypto.randomUUID()}` };
+    throw new Error("RESEND_API_KEY is required to send email.");
   }
 
   const resend = new Resend(env.resendApiKey);

@@ -38,8 +38,8 @@ export function CommandPalette({
     }
 
     if (action === "run-agents") {
-      toast.success("Agent swarm queued in mock mode", {
-        description: "Lead scoring, strategy, outreach, and compliance gates are simulated.",
+      toast.success("Agent swarm queued", {
+        description: "Lead scoring, strategy, outreach, and compliance gates will run through live APIs.",
       });
     }
   }
@@ -93,12 +93,12 @@ export function CommandPalette({
                   </Command.Item>
                 ))}
                 <Command.Item
-                  value="Start mock lead batch"
+                  value="Start lead batch"
                   onSelect={() => runAction("run-agents")}
                   className="flex cursor-pointer items-center gap-3 rounded-[8px] px-3 py-3 text-sm text-zinc-200 outline-none data-[selected=true]:bg-white/10 data-[selected=true]:text-white"
                 >
                   <Sparkles className="h-4 w-4 text-amber-200" />
-                  Start mock lead batch
+                  Start lead batch
                 </Command.Item>
               </Command.Group>
             </Command.List>

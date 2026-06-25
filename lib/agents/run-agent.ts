@@ -1,9 +1,7 @@
 import OpenAI from "openai";
-import { env, isMockMode } from "@/lib/env";
-import { getMockAgentResult } from "@/lib/agents/mock-responses";
+import { env } from "@/lib/env";
 import { getAgentPrompt } from "@/lib/agents/prompts";
 import { validateAgentOutput } from "@/lib/agents/output-schemas";
-import { leads } from "@/lib/mock-data";
 import type { AgentKey, AgentResponse, Lead } from "@/lib/types";
 import { auditLog, createAuditId, sanitizeInput } from "@/lib/security";
 import { createClient } from "@/lib/supabase/server";
@@ -15,10 +13,6 @@ interface RunAgentInput {
   input?: Record<string, unknown>;
 }
 
-function getMockLead(leadId?: string): Lead | undefined {
-  return leadId ? leads.find((lead) => lead.id === leadId) : undefined;
-}
-
 async function getLead(leadId?: string): Promise<Lead | undefined> {
   if (!leadId) return undefined;
 
@@ -28,7 +22,7 @@ async function getLead(leadId?: string): Promise<Lead | undefined> {
     if (!error && data) return mapLead(data);
   }
 
-  return getMockLead(leadId);
+  return undefined;
 }
 
 function parseJson(content: string) {
@@ -63,41 +57,16 @@ export async function runAgent<T = unknown>(input: RunAgentInput): Promise<Agent
   const auditId = createAuditId("agent");
   const prompt = getAgentPrompt(cleanInput.agent);
   const lead = await getLead(cleanInput.leadId);
-  const mode = isMockMode() ? "mock" : "live";
 
   auditLog("agent_run_started", {
     auditId,
     agent: cleanInput.agent,
     leadId: cleanInput.leadId,
-    mode,
+    mode: "live",
   });
 
-  if (mode === "mock") {
-    const result = validateAgentOutput(cleanInput.agent, getMockAgentResult(cleanInput.agent, {
-      lead,
-      input: cleanInput.input,
-    })) as T;
-
-    auditLog("agent_run_completed", {
-      auditId,
-      agent: cleanInput.agent,
-      mode,
-      tokenUsage: "mock placeholder",
-      cost: 0,
-    });
-
-    return {
-      ok: true,
-      mode,
-      agent: cleanInput.agent,
-      result,
-      usage: {
-        promptTokens: 0,
-        completionTokens: 0,
-        estimatedCostUsd: 0,
-      },
-      auditId,
-    };
+  if (!env.openaiApiKey) {
+    throw new Error("OPENAI_API_KEY is required to run agents.");
   }
 
   const client = new OpenAI({ apiKey: env.openaiApiKey });
@@ -139,7 +108,7 @@ The JSON must match this required shape: ${JSON.stringify(prompt.outputSchema)}`
   auditLog("agent_run_completed", {
     auditId,
     agent: cleanInput.agent,
-    mode,
+    mode: "live",
     promptTokens,
     completionTokens,
     estimatedCostUsd,
@@ -148,7 +117,7 @@ The JSON must match this required shape: ${JSON.stringify(prompt.outputSchema)}`
 
   return {
     ok: true,
-    mode,
+    mode: "live",
     agent: cleanInput.agent,
     result,
     usage: {

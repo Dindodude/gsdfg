@@ -1186,7 +1186,7 @@ export const complianceReviews: ComplianceReview[] = [
     fixesRequired: [],
     status: "Approved",
     timestamp: "2026-06-24T15:58:00.000Z",
-    agentNotes: "CASL-style basics satisfied for mock mode.",
+    agentNotes: "CASL-style basics satisfied for the demo dataset.",
   },
   {
     id: "comp-005",

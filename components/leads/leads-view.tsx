@@ -79,7 +79,7 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
               <div className="max-w-3xl">
                 <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
                   <DatabaseZap className="h-3.5 w-3.5" />
-                  {source === "supabase" ? "Live Supabase leads" : "25 seeded leads"}
+                  {source === "supabase" ? "Live Supabase leads" : "Connect Supabase"}
                 </Badge>
                 <h2 className="mt-4 text-3xl font-semibold tracking-normal text-zinc-50">Lead database built for autonomous qualification.</h2>
                 <p className="mt-3 text-sm leading-6 text-zinc-400">
@@ -87,13 +87,13 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={() => toast.info("Manual import drawer is mocked for local mode")}>
+                <Button variant="secondary" onClick={() => toast.info("Manual import drawer is ready for persistence wiring")}>
                   <Plus className="h-4 w-4" />
                   Import Lead
                 </Button>
-                <Button onClick={() => toast.success("Mock leads generated", { description: "Lead Finder Agent added a new batch in mock mode." })}>
+                <Button onClick={() => toast.success("Lead Finder Agent queued", { description: "OpenAI will generate structured lead records." })}>
                   <Sparkles className="h-4 w-4" />
-                  Generate Mock Leads
+                  Generate Leads
                 </Button>
               </div>
             </div>

@@ -64,7 +64,7 @@ export function DashboardView({
     { month: "Jun", value: revenueEstimate },
   ];
   const metrics = [
-    { label: "Total leads", value: leads.length.toString(), change: source === "supabase" ? "Live database" : "+25 mock batch", icon: UsersRound },
+    { label: "Total leads", value: leads.length.toString(), change: source === "supabase" ? "Live database" : "Connect Supabase", icon: UsersRound },
     { label: "Interested leads", value: interestedLeads.length.toString(), change: "Owner action needed", icon: MousePointer2 },
     { label: "Websites in progress", value: websitesInProgress.length.toString(), change: "AI team active", icon: Bot },
     { label: "Websites completed", value: websitesCompleted.length.toString(), change: "Ready for preview", icon: CheckCircle2 },
@@ -152,7 +152,7 @@ export function DashboardView({
           <CardHeader className="flex-row items-start justify-between gap-4">
             <div>
               <CardTitle>Revenue Analytics</CardTitle>
-              <CardDescription>Estimated website package revenue from active and mock pipeline.</CardDescription>
+              <CardDescription>Estimated website package revenue from the active pipeline.</CardDescription>
             </div>
             <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
               <TrendingUp className="h-3.5 w-3.5" />

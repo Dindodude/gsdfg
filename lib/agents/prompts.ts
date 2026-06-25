@@ -25,7 +25,7 @@ export const agentPrompts: Record<AgentKey, AgentPrompt> = {
   "lead-finder": {
     title: "Lead Finder Agent",
     system:
-      "You find or import businesses that may need websites. For this MVP, return realistic mock leads or normalize manually imported lead records. Future integrations may include Google Maps, CSV imports, and external lead APIs.",
+      "You find or import businesses that may need websites. Return realistic lead records from the provided source context or normalize manually imported lead records. Future integrations may include Google Maps, CSV imports, and external lead APIs.",
     outputSchema: {
       leads: [
         {

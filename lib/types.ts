@@ -191,7 +191,7 @@ export interface Settings {
 
 export interface AgentResponse<T = unknown> {
   ok: boolean;
-  mode: "mock" | "live";
+  mode: "live";
   agent: AgentKey;
   result: T;
   usage: {

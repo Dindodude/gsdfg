@@ -43,11 +43,7 @@ export async function POST(request: Request) {
     const supabase = await createClient();
 
     if (!supabase) {
-      return ok({
-        sent: false,
-        mode: "mock",
-        reason: "Supabase is not configured, so no persisted message can be sent.",
-      });
+      throw new Error("Supabase is required to send persisted outreach.");
     }
 
     const { data: message, error } = await supabase
@@ -127,7 +123,7 @@ export async function POST(request: Request) {
       }
     }
 
-    let providerResponse: { mode: "mock" | "live"; id?: string | null; sid?: string };
+    let providerResponse: { mode: "live"; id?: string | null; sid?: string };
 
     if (message.channel === "Email") {
       if (!lead?.email) {
@@ -138,7 +134,7 @@ export async function POST(request: Request) {
         });
       }
 
-      if (env.resendApiKey && !env.outreachFromEmail) {
+      if (!env.outreachFromEmail) {
         return ok({
           sent: false,
           blocked: true,
@@ -154,9 +150,7 @@ export async function POST(request: Request) {
 
       providerResponse = await sendEmailReadyMessage({
         to: lead.email,
-        from: env.outreachFromEmail
-          ? `${env.outreachFromName} <${env.outreachFromEmail}>`
-          : "AgencyForge AI <mock@agencyforge.local>",
+        from: `${env.outreachFromName} <${env.outreachFromEmail}>`,
         subject: message.subject ?? "Quick website idea",
         text,
         html: buildEmailHtml(text, unsubscribeUrl),
@@ -175,10 +169,7 @@ export async function POST(request: Request) {
         body: message.body,
       });
     } else {
-      providerResponse = {
-        mode: "mock",
-        id: `mock-dm-${crypto.randomUUID()}`,
-      };
+      throw new Error("DM sending requires a live social messaging integration.");
     }
 
     await supabase

@@ -367,7 +367,7 @@ export function WebsitesView({ websiteProjects, leads }: { websiteProjects: Webs
             <Card>
               <CardHeader>
                 <CardTitle>Export as Next.js</CardTitle>
-                <CardDescription>Mock export uses generated layout JSON as component input.</CardDescription>
+                <CardDescription>Export uses generated layout JSON as component input.</CardDescription>
               </CardHeader>
               <CardContent>
                 <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-[8px] border border-white/10 bg-black/30 p-4 text-xs leading-5 text-zinc-400">

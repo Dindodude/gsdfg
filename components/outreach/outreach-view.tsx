@@ -101,7 +101,7 @@ export function OutreachView({
       return;
     }
 
-    toast.success("Message sent", { description: `Provider mode: ${body.data?.provider?.mode ?? "mock"}` });
+    toast.success("Message sent", { description: `Provider: ${body.data?.provider?.mode ?? "live"}` });
     router.refresh();
   }
 

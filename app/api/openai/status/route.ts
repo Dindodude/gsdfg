@@ -1,12 +1,12 @@
 import { ok } from "@/lib/api/responses";
-import { env, isMockMode } from "@/lib/env";
+import { env, isOpenAIConfigured } from "@/lib/env";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   return ok({
-    configured: Boolean(env.openaiApiKey),
-    mode: isMockMode() ? "mock" : "live",
+    configured: isOpenAIConfigured(),
+    mode: isOpenAIConfigured() ? "live" : "not_configured",
     model: env.openaiModel,
   });
 }

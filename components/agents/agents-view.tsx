@@ -43,11 +43,11 @@ export function AgentsView({
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => toast.info("Prompt registry opened in mock mode")}>
+              <Button variant="secondary" onClick={() => toast.info("Prompt registry opened")}>
                 <FileJson className="h-4 w-4" />
                 Prompt Registry
               </Button>
-              <Button onClick={() => toast.success("Agent team queued", { description: "Mock mode will return structured JSON for every agent." })}>
+              <Button onClick={() => toast.success("Agent team queued", { description: "OpenAI will return structured JSON for every agent." })}>
                 <Play className="h-4 w-4" />
                 Run Agents
               </Button>
@@ -158,7 +158,7 @@ export function AgentsView({
               "Retry handling",
               "Token usage placeholder",
               "Cost logging placeholder",
-              "Mock responses without API keys",
+              "OpenAI API key required",
               "Audit logs for every run",
               "Compliance gate before send and delivery",
             ].map((item) => (

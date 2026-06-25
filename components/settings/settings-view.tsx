@@ -11,7 +11,6 @@ import type { Settings } from "@/lib/types";
 
 const envVars = [
   "OPENAI_API_KEY",
-  "MOCK_MODE",
   "NEXT_PUBLIC_SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
@@ -25,7 +24,7 @@ const envVars = [
 
 type OpenAIStatus = {
   configured: boolean;
-  mode: "mock" | "live";
+  mode: "not_configured" | "live";
   model: string;
 };
 
@@ -45,7 +44,7 @@ export function SettingsView({ settings, source }: { settings: Settings; source:
         }
       } catch {
         if (!cancelled) {
-          setOpenAIStatus({ configured: false, mode: "mock", model: "unknown" });
+          setOpenAIStatus({ configured: false, mode: "not_configured", model: "unknown" });
         }
       }
     }
@@ -60,9 +59,7 @@ export function SettingsView({ settings, source }: { settings: Settings; source:
   const openAIIntegrationStatus = openAIStatus
     ? openAIStatus.mode === "live"
       ? `Live: ${openAIStatus.model}`
-      : openAIStatus.configured
-        ? "Key set, mock mode"
-        : "Mock until key"
+      : "API key required"
     : "Checking";
 
   return (
@@ -73,7 +70,7 @@ export function SettingsView({ settings, source }: { settings: Settings; source:
             <div className="max-w-4xl">
               <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
                 <ToggleRight className="h-3.5 w-3.5" />
-                {source === "supabase" ? "Supabase connected" : "Mock mode active"}
+                {source === "supabase" ? "Supabase connected" : "Connect Supabase"}
               </Badge>
               <h2 className="mt-4 text-3xl font-semibold tracking-normal text-zinc-50">Production-ready configuration with safe local defaults.</h2>
               <p className="mt-3 text-sm leading-6 text-zinc-400">
@@ -146,10 +143,10 @@ export function SettingsView({ settings, source }: { settings: Settings; source:
         </div>
 
         <div className="space-y-4">
-          <IntegrationCard icon={KeyRound} title="OpenAI" description="Structured JSON agent outputs with retry, usage, and mock fallback." status={openAIIntegrationStatus} />
+          <IntegrationCard icon={KeyRound} title="OpenAI" description="Structured JSON agent outputs with retry and usage tracking." status={openAIIntegrationStatus} />
           <IntegrationCard icon={Database} title="Supabase" description="Database, auth, storage-ready architecture, migrations, RLS policies." status="Schema ready" />
           <IntegrationCard icon={Mail} title="Resend / SendGrid" description="Resend adapter is implemented. SendGrid key slot is documented for future swap." status="Email-ready" />
-          <IntegrationCard icon={Smartphone} title="Twilio SMS" description="Server-side SMS adapter returns mock SID without credentials." status="SMS-ready" />
+          <IntegrationCard icon={Smartphone} title="Twilio SMS" description="Server-side SMS adapter uses Twilio credentials when SMS is enabled." status="SMS-ready" />
 
           <Card>
             <CardHeader>
@@ -157,7 +154,7 @@ export function SettingsView({ settings, source }: { settings: Settings; source:
               <CardDescription>Vercel-ready Next.js app router structure.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {["App Router", "TypeScript strict mode", "Tailwind CSS v4", "API routes", "Environment variables", "Mock mode"].map((item) => (
+              {["App Router", "TypeScript strict mode", "Tailwind CSS v4", "API routes", "Environment variables", "Live API mode"].map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-[8px] border border-white/10 bg-white/5 px-3 py-3">
                   <CheckCircle2 className="h-4 w-4 text-emerald-200" />
                   <span className="text-sm text-zinc-300">{item}</span>

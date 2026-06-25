@@ -25,15 +25,9 @@ npm run dev
 
 Open `http://localhost:3000`. The root route redirects to `/dashboard`.
 
-## Mock Mode
+## Live API Mode
 
-Mock mode is enabled by default with:
-
-```bash
-MOCK_MODE=true
-```
-
-If `OPENAI_API_KEY` is missing, the app automatically uses deterministic structured mock responses. All pages and API routes still run locally without real credentials.
+AgencyForge AI is configured to run agents and outbound messaging through live APIs. `OPENAI_API_KEY` is required for agent runs, `RESEND_API_KEY` is required for live email, and Twilio credentials are required before SMS can be sent.
 
 ## Environment Variables
 
@@ -44,7 +38,6 @@ Required for live OpenAI:
 ```bash
 OPENAI_API_KEY=...
 OPENAI_MODEL=gpt-4.1-mini
-MOCK_MODE=false
 ```
 
 Supabase:
@@ -109,7 +102,7 @@ The app uses `@supabase/ssr` for App Router auth:
 - `/logout` signs the owner out.
 - `/api/auth/bootstrap-user` creates the matching `public.users` profile.
 
-When Supabase is configured and a user is signed in, dashboard pages read live rows from Supabase. If Supabase is missing or a query fails, the app falls back to mock data so local development does not collapse into a sad little puddle.
+When Supabase is configured and a user is signed in, dashboard pages read live rows from Supabase. Demo data remains available only as a visual fallback for local development or an unconfigured database.
 
 ## OpenAI Agent System
 
@@ -120,7 +113,7 @@ The runner provides:
 - Server-side OpenAI calls only
 - JSON response formatting
 - Retry handling
-- Mock fallback
+- Required OpenAI API key for live agent execution
 - Audit logging
 - Token usage placeholders
 - Cost logging placeholders
@@ -143,10 +136,9 @@ Agents implemented:
 To turn live agents on locally:
 
 1. Add `OPENAI_API_KEY` to `.env.local`.
-2. Set `MOCK_MODE=false`.
-3. Optionally set `OPENAI_MODEL=gpt-4.1-mini`.
-4. Restart the dev server.
-5. Test `POST /api/agents/run` with a logged-in Supabase user.
+2. Optionally set `OPENAI_MODEL=gpt-4.1-mini`.
+3. Restart the dev server.
+4. Test `POST /api/agents/run` with a logged-in Supabase user.
 
 If the model returns malformed JSON or misses a required field, the request fails safely instead of saving bad data.
 
@@ -173,7 +165,7 @@ Compliance records include risk level, issues found, fixes required, status, tim
 
 ## API Routes
 
-All routes include Zod validation, sanitization, safe errors, audit logging, mock mode, and clear response envelopes.
+All routes include Zod validation, sanitization, safe errors, audit logging, and clear response envelopes.
 
 - `POST /api/agents/run`
 - `GET /api/leads`
@@ -197,7 +189,7 @@ Workflow persistence now saves:
 - QA review status/activity into `website_projects`, `activity_logs`, and `tasks`
 - Delivery preparation into `activity_logs`, `tasks`, and project status
 
-`/api/outreach/send` is compliance-gated server-side. Email uses Resend when configured, SMS uses Twilio when configured, and both fall back to mock provider responses without keys.
+`/api/outreach/send` is compliance-gated server-side. Email uses Resend, SMS uses Twilio, and missing provider credentials return safe errors instead of fake sends.
 
 Live cold email also has:
 
@@ -234,11 +226,11 @@ Set `UNSUBSCRIBE_SECRET` to a long random string in both `.env.local` and Vercel
 - `/tasks`
 - `/settings`
 
-Each page is populated with realistic seed data from `lib/mock-data.ts`.
+Pages read from Supabase when authenticated. The local repository still includes demo data in `lib/mock-data.ts` for visual fallback states.
 
 ## Seed Data
 
-The mock dataset includes:
+The demo dataset includes:
 
 - 25 realistic small-business leads
 - 10 agent runs
@@ -260,7 +252,7 @@ npm run build
 
 ## Future Improvements
 
-- Persist all mock data to Supabase.
+- Replace demo fallback data with an onboarding seed action.
 - Add Supabase Auth UI and role-specific permissions.
 - Add CSV import and deduplication.
 - Add Google Business Profile or Maps API ingestion.
