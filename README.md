@@ -58,7 +58,11 @@ SUPABASE_SERVICE_ROLE_KEY=...
 Email/SMS:
 
 ```bash
+OUTREACH_FROM_EMAIL=hello@yourdomain.com
+OUTREACH_FROM_NAME=AgencyForge AI
 RESEND_API_KEY=...
+RESEND_WEBHOOK_SECRET=...
+UNSUBSCRIBE_SECRET=...
 SENDGRID_API_KEY=...
 TWILIO_ACCOUNT_SID=...
 TWILIO_AUTH_TOKEN=...
@@ -70,10 +74,11 @@ TWILIO_FROM_NUMBER=...
 1. Create a Supabase project.
 2. Run `supabase/migrations/001_initial_schema.sql`.
 3. Run `supabase/migrations/002_user_profile_insert_policy.sql`.
-4. Add Supabase environment variables to `.env.local` and Vercel.
-5. Restart the local dev server.
-6. Visit `/login` and create/sign in to an account.
-7. Optionally adapt `supabase/seed.sql` with a real user id to add starter leads/agents.
+4. Run `supabase/migrations/003_suppression_and_email_events.sql`.
+5. Add Supabase environment variables to `.env.local` and Vercel.
+6. Restart the local dev server.
+7. Visit `/login` and create/sign in to an account.
+8. Optionally adapt `supabase/seed.sql` with a real user id to add starter leads/agents.
 
 The schema includes:
 
@@ -89,6 +94,8 @@ The schema includes:
 - `tasks`
 - `activity_logs`
 - `settings`
+- `suppression_list`
+- `email_events`
 
 RLS is enabled across tables with owner-scoped policies.
 
@@ -190,6 +197,29 @@ Workflow persistence now saves:
 
 `/api/outreach/send` is compliance-gated server-side. Email uses Resend when configured, SMS uses Twilio when configured, and both fall back to mock provider responses without keys.
 
+Live cold email also has:
+
+- `OUTREACH_FROM_EMAIL` and `OUTREACH_FROM_NAME` for the sender identity.
+- Signed unsubscribe links on every outbound email.
+- `/unsubscribe` for recipient opt-outs.
+- `/api/unsubscribe` to add contacts to `suppression_list`.
+- Suppression checks before sending email or SMS.
+- `/api/webhooks/resend` for Resend events, including delivered, bounced, complained, failed, suppressed, opened, clicked, and received.
+
+In Resend, create a webhook pointing to:
+
+```bash
+https://your-vercel-domain.com/api/webhooks/resend
+```
+
+Then copy the webhook signing secret into:
+
+```bash
+RESEND_WEBHOOK_SECRET=...
+```
+
+Set `UNSUBSCRIBE_SECRET` to a long random string in both `.env.local` and Vercel. Keep it stable; changing it invalidates old unsubscribe links.
+
 ## App Pages
 
 - `/dashboard`
@@ -232,7 +262,7 @@ npm run build
 - Add Supabase Auth UI and role-specific permissions.
 - Add CSV import and deduplication.
 - Add Google Business Profile or Maps API ingestion.
-- Add real email reply webhooks.
+- Classify inbound email replies automatically after the Resend receive webhook stores them.
 - Add Twilio inbound SMS webhooks.
 - Add website draft versioning.
 - Add storage-backed client preview links.
