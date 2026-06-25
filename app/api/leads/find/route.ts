@@ -1,5 +1,5 @@
 import { leadFindSchema } from "@/lib/api/schemas";
-import { fail, ok } from "@/lib/api/responses";
+import { ok } from "@/lib/api/responses";
 import { runAgent } from "@/lib/agents/run-agent";
 import { ensureUserProfile } from "@/lib/data/queries";
 import { mapLead } from "@/lib/data/mappers";
@@ -8,6 +8,28 @@ import { auditLog, rateLimitPlaceholder, sanitizeInput } from "@/lib/security";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
+
+function leadFinderErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (message.includes("GOOGLE_PLACES_API_KEY")) {
+    return "GOOGLE_PLACES_API_KEY is missing in Vercel.";
+  }
+
+  if (message.includes("Google Places lead search failed")) {
+    return message;
+  }
+
+  if (message.includes("Supabase auth")) {
+    return "Sign in with Supabase before finding leads.";
+  }
+
+  if (message.includes("OPENAI_API_KEY")) {
+    return "OPENAI_API_KEY is missing, so found leads could not be scored.";
+  }
+
+  return "Lead finding failed. Check Vercel logs for the server error.";
+}
 
 export async function POST(request: Request) {
   try {
@@ -60,16 +82,27 @@ export async function POST(request: Request) {
     const topLeads = inserted
       .sort((a, b) => Number(b.lead_score ?? 0) - Number(a.lead_score ?? 0))
       .slice(0, 3);
+    let scored = 0;
+    let scoringWarning: string | null = null;
 
     for (const lead of topLeads) {
-      await runAgent({
-        agent: "lead-scoring",
-        leadId: String(lead.id),
-        input: {
-          source: "Google Places Text Search",
-          lead: mapLead(lead),
-        },
-      });
+      try {
+        await runAgent({
+          agent: "lead-scoring",
+          leadId: String(lead.id),
+          input: {
+            source: "Google Places Text Search",
+            lead: mapLead(lead),
+          },
+        });
+        scored += 1;
+      } catch (error) {
+        scoringWarning = leadFinderErrorMessage(error);
+        auditLog("lead_finder_scoring_warning", {
+          leadId: lead.id,
+          warning: scoringWarning,
+        });
+      }
     }
 
     auditLog("leads_found_google_places", {
@@ -78,16 +111,29 @@ export async function POST(request: Request) {
       city: payload.city,
       found: foundLeads.length,
       inserted: inserted.length,
-      scored: topLeads.length,
+      scored,
+      scoringWarning,
     });
 
     return ok({
       found: foundLeads.length,
       inserted: inserted.length,
-      scored: topLeads.length,
+      scored,
+      scoringWarning,
       leads: inserted.map(mapLead),
     });
   } catch (error) {
-    return fail(error);
+    auditLog("lead_finder_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return Response.json(
+      {
+        ok: false,
+        error: leadFinderErrorMessage(error),
+        timestamp: new Date().toISOString(),
+      },
+      { status: 400 },
+    );
   }
 }
