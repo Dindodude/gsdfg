@@ -48,6 +48,14 @@ GOOGLE_PLACES_API_KEY=...
 
 The Lead Finder uses Google Places Text Search to find real businesses by industry and city, saves them to Supabase, then scores the top results with OpenAI.
 
+Current lead finder targeting:
+
+- 100-200 Google reviews.
+- No website returned by Google Places.
+- Not permanently closed.
+
+Because no-website leads do not have a website to crawl, email enrichment is a separate step. `/api/leads/enrich-email` can scrape public emails from a lead's website/contact pages when a URL exists. For strict no-website leads, connect a dedicated enrichment provider later, such as Apollo, Hunter, Clay, or a SERP/contact-data API.
+
 Supabase:
 
 ```bash
@@ -179,6 +187,7 @@ All routes include Zod validation, sanitization, safe errors, audit logging, and
 - `GET /api/leads`
 - `POST /api/leads`
 - `POST /api/leads/find`
+- `POST /api/leads/enrich-email`
 - `POST /api/leads/score`
 - `POST /api/outreach/generate`
 - `POST /api/outreach/send`

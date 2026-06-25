@@ -92,8 +92,34 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
     }
 
     toast.success("Leads found", {
-      description: `${body.data?.inserted ?? 0} saved from Google Places. Top leads were scored with OpenAI.`,
+      description: `${body.data?.inserted ?? 0} saved from Google Places. Criteria: 100-200 reviews, no website.`,
     });
+    router.refresh();
+  }
+
+  async function enrichSelectedEmail() {
+    if (!selectedLead) return;
+
+    setLoading("email");
+    const response = await fetch("/api/leads/enrich-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId: selectedLead.id }),
+    });
+    const body = await response.json();
+    setLoading(null);
+
+    if (!response.ok || !body.ok) {
+      toast.error("Email enrichment failed", { description: body.error ?? "Could not scrape email." });
+      return;
+    }
+
+    const firstResult = body.data?.results?.[0];
+    if (body.data?.updated > 0) {
+      toast.success("Email saved", { description: firstResult?.email ?? "Lead email was updated." });
+    } else {
+      toast.info("No email found", { description: firstResult?.status ?? "No public email was found." });
+    }
     router.refresh();
   }
 
@@ -145,7 +171,7 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
             <CardDescription>Manual now, external lead sources ready later.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            {["Manual import", "CSV import ready", "Google Maps/API future", "External lead APIs future"].map((item) => (
+            {["Manual import", "CSV import ready", "Google Places live", "External email enrichment future"].map((item) => (
               <div key={item} className="flex items-center justify-between rounded-[8px] border border-white/10 bg-white/5 px-3 py-2">
                 <span className="text-sm text-zinc-300">{item}</span>
                 <Badge className="border-white/10 bg-white/6 text-zinc-300">Ready</Badge>
@@ -271,6 +297,10 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
                 <Button disabled={loading === "score"} onClick={scoreLead}>
                   <Bot className="h-4 w-4" />
                   {loading === "score" ? "Scoring..." : "Run Lead Scoring"}
+                </Button>
+                <Button variant="secondary" disabled={loading === "email"} onClick={enrichSelectedEmail}>
+                  <Search className="h-4 w-4" />
+                  {loading === "email" ? "Finding Email..." : "Find Email"}
                 </Button>
                 <Button
                   variant="secondary"

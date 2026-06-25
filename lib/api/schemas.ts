@@ -61,6 +61,10 @@ export const leadFindSchema = z.object({
   limit: z.number().int().min(1).max(20).default(10),
 });
 
+export const leadEmailEnrichSchema = z.object({
+  leadId: z.string().optional(),
+});
+
 export const outreachGenerateSchema = z.object({
   leadId: z.string(),
   strategy: z.record(z.string(), z.unknown()).optional(),

@@ -34,6 +34,7 @@ export interface FoundLead {
   notes: string;
   source: string;
   estimatedValue: number;
+  reviewCount: number;
 }
 
 function inferCity(address: string | undefined, fallback: string) {
@@ -59,6 +60,14 @@ function scoreLead(place: GooglePlace) {
   return Math.min(98, Math.round(42 + missingWebsiteBoost + reviewSignal + ratingSignal));
 }
 
+function isTargetPlace(place: GooglePlace) {
+  const reviewCount = place.userRatingCount ?? 0;
+  const hasWebsite = Boolean(place.websiteUri);
+  const isClosed = place.businessStatus === "CLOSED_PERMANENTLY";
+
+  return reviewCount >= 100 && reviewCount <= 200 && !hasWebsite && !isClosed;
+}
+
 export async function findPlacesLeads(input: {
   industry: string;
   city: string;
@@ -78,7 +87,7 @@ export async function findPlacesLeads(input: {
     },
     body: JSON.stringify({
       textQuery: `${input.industry} in ${input.city}`,
-      pageSize: input.limit,
+      pageSize: 20,
     }),
   });
 
@@ -88,12 +97,13 @@ export async function findPlacesLeads(input: {
   }
 
   const payload = (await response.json()) as GooglePlacesTextSearchResponse;
-  return (payload.places ?? []).slice(0, input.limit).map((place) => {
+  return (payload.places ?? []).filter(isTargetPlace).slice(0, input.limit).map((place) => {
     const businessName = place.displayName?.text ?? "Unnamed business";
     const phone = place.nationalPhoneNumber ?? place.internationalPhoneNumber ?? null;
     const websiteQuality = scoreWebsiteQuality(place);
     const googlePresence = scoreGooglePresence(place);
     const leadScore = scoreLead(place);
+    const reviewCount = place.userRatingCount ?? 0;
 
     return {
       businessName,
@@ -109,13 +119,15 @@ export async function findPlacesLeads(input: {
       notes: [
         `Found through Google Places for "${input.industry} in ${input.city}".`,
         place.formattedAddress ? `Address: ${place.formattedAddress}.` : null,
-        place.rating ? `Google rating ${place.rating} from ${place.userRatingCount ?? 0} reviews.` : null,
-        place.websiteUri ? "Website exists; review quality before outreach." : "No website returned by Places API.",
+        place.rating ? `Google rating ${place.rating} from ${reviewCount} reviews.` : null,
+        "Target match: 100-200 reviews and no website returned by Places API.",
+        "Email enrichment required before cold outreach.",
       ]
         .filter(Boolean)
         .join(" "),
       source: "Google Places Text Search",
       estimatedValue: leadScore >= 85 ? 6500 : leadScore >= 70 ? 4800 : 3200,
+      reviewCount,
     };
   });
 }
