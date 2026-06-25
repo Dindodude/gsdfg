@@ -171,11 +171,24 @@ All routes include Zod validation, sanitization, safe errors, audit logging, moc
 - `POST /api/leads`
 - `POST /api/leads/score`
 - `POST /api/outreach/generate`
+- `POST /api/outreach/send`
 - `POST /api/replies/classify`
 - `POST /api/websites/generate`
 - `POST /api/compliance/review`
 - `POST /api/qa/review`
 - `POST /api/delivery/prepare`
+
+Workflow persistence now saves:
+
+- Generated outreach variants into `outreach_messages`
+- Outreach compliance reviews into `compliance_reviews`
+- Reply classifications into `replies`, with owner tasks for interested replies
+- Generated website projects into `website_projects`
+- Generated pages/sections into `website_pages`
+- QA review status/activity into `website_projects`, `activity_logs`, and `tasks`
+- Delivery preparation into `activity_logs`, `tasks`, and project status
+
+`/api/outreach/send` is compliance-gated server-side. Email uses Resend when configured, SMS uses Twilio when configured, and both fall back to mock provider responses without keys.
 
 ## App Pages
 

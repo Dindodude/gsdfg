@@ -37,6 +37,21 @@ export async function POST(request: Request) {
         status: result.status ?? "Needs Fixes",
         agent_notes: (response.result as { agentNotes?: string }).agentNotes ?? "",
       });
+
+      if (payload.leadId) {
+        const updatePayload: Record<string, string> = {
+          compliance_status: result.status ?? "Needs Fixes",
+          updated_at: new Date().toISOString(),
+        };
+        if (result.status === "Blocked") {
+          updatePayload.status = "Compliance Review";
+        }
+
+        await supabase
+          .from("leads")
+          .update(updatePayload)
+          .eq("id", payload.leadId);
+      }
     }
 
     auditLog("compliance_review_completed", {

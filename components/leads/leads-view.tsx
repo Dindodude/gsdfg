@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Bot, CalendarClock, ClipboardList, DatabaseZap, Filter, Plus, Search, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +13,10 @@ import type { Lead } from "@/lib/types";
 import { cn, complianceTone, formatCurrency, formatDate, scoreTone, statusTone } from "@/lib/utils";
 
 export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase" | "mock" }) {
+  const router = useRouter();
   const [query, setQuery] = React.useState("");
   const [status, setStatus] = React.useState("All");
+  const [loading, setLoading] = React.useState<string | null>(null);
   const priorityLeads = React.useMemo(() => [...leads].sort((a, b) => b.leadScore - a.leadScore).slice(0, 6), [leads]);
   const [selectedLeadId, setSelectedLeadId] = React.useState(priorityLeads[0]?.id ?? leads[0]?.id ?? "");
   const selectedLead = leads.find((lead) => lead.id === selectedLeadId) ?? leads[0];
@@ -25,6 +28,47 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
     const matchesStatus = status === "All" || lead.status === status;
     return matchesQuery && matchesStatus;
   });
+
+  async function scoreLead() {
+    if (!selectedLead) return;
+    setLoading("score");
+    const response = await fetch("/api/leads/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId: selectedLead.id }),
+    });
+    setLoading(null);
+
+    if (!response.ok) {
+      toast.error("Lead scoring failed");
+      return;
+    }
+
+    toast.success("Lead scored", { description: "Score and status were saved when Supabase is connected." });
+    router.refresh();
+  }
+
+  async function sendToWebsiteTeam() {
+    if (!selectedLead) return;
+    setLoading("website");
+    const response = await fetch("/api/websites/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leadId: selectedLead.id,
+        ownerNotes: selectedLead.notes || "Owner approved this lead for the website team.",
+      }),
+    });
+    setLoading(null);
+
+    if (!response.ok) {
+      toast.error("Website handoff failed");
+      return;
+    }
+
+    toast.success("Sent to Website Team", { description: "Website intake and page drafts were saved." });
+    router.refresh();
+  }
 
   return (
     <div className="space-y-6">
@@ -185,16 +229,17 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
               <Textarea defaultValue={selectedLead.notes} placeholder="Conversation notes, requirements, pricing notes..." />
 
               <div className="grid gap-2">
-                <Button onClick={() => toast.success("Agents queued", { description: `Running scoring, strategy, outreach, and compliance for ${selectedLead.businessName}.` })}>
+                <Button disabled={loading === "score"} onClick={scoreLead}>
                   <Bot className="h-4 w-4" />
-                  Run Agents
+                  {loading === "score" ? "Scoring..." : "Run Lead Scoring"}
                 </Button>
                 <Button
                   variant="secondary"
-                  onClick={() => toast.success("Sent to Website Team", { description: "Website Intake and Builder agents will use the owner notes." })}
+                  disabled={loading === "website"}
+                  onClick={sendToWebsiteTeam}
                 >
                   <Send className="h-4 w-4" />
-                  Send to Website Team
+                  {loading === "website" ? "Sending..." : "Send to Website Team"}
                 </Button>
               </div>
             </CardContent>

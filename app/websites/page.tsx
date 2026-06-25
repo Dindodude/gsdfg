@@ -7,7 +7,7 @@ export default async function WebsitesPage() {
 
   return (
     <AppShell userEmail={data.userEmail} dataSource={data.source}>
-      <WebsitesView websiteProjects={data.websiteProjects} />
+      <WebsitesView websiteProjects={data.websiteProjects} leads={data.leads} />
     </AppShell>
   );
 }

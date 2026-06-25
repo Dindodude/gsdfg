@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Code2, Eye, FileCheck2, Layers3, Pencil, Send, ShieldCheck, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import type { WebsiteProject } from "@/lib/types";
+import type { Lead, WebsiteProject } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const statusTone = {
@@ -21,10 +22,114 @@ const statusTone = {
   Delivered: "border-emerald-300/30 bg-emerald-300/10 text-emerald-100",
 };
 
-export function WebsitesView({ websiteProjects }: { websiteProjects: WebsiteProject[] }) {
+export function WebsitesView({ websiteProjects, leads }: { websiteProjects: WebsiteProject[]; leads: Lead[] }) {
+  const router = useRouter();
   const [projectId, setProjectId] = React.useState(websiteProjects[0]?.id ?? "");
+  const [selectedLeadId, setSelectedLeadId] = React.useState(leads[0]?.id ?? "");
+  const [loading, setLoading] = React.useState<string | null>(null);
   const project = websiteProjects.find((item) => item.id === projectId) ?? websiteProjects[0];
   const activePage = project?.pages[0];
+
+  async function generateWebsite(leadId: string, ownerNotes = "Owner approved the lead for the website team.") {
+    if (!leadId) {
+      toast.error("Add or select a lead first");
+      return;
+    }
+
+    setLoading("generate");
+    const response = await fetch("/api/websites/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId, ownerNotes }),
+    });
+    setLoading(null);
+
+    if (!response.ok) {
+      toast.error("Website generation failed");
+      return;
+    }
+
+    toast.success("Website draft saved", { description: "Project and generated pages were saved to Supabase." });
+    router.refresh();
+  }
+
+  async function runQa() {
+    if (!project) return;
+    setLoading("qa");
+    const response = await fetch("/api/qa/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        websiteProjectId: project.id,
+        leadId: project.leadId,
+        content: JSON.stringify(project.pages),
+      }),
+    });
+    setLoading(null);
+
+    if (!response.ok) {
+      toast.error("QA review failed");
+      return;
+    }
+
+    toast.success("QA review saved");
+    router.refresh();
+  }
+
+  async function runCompliance() {
+    if (!project) return;
+    setLoading("compliance");
+    const response = await fetch("/api/compliance/review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leadId: project.leadId,
+        targetType: "Website Content",
+        targetName: `${project.leadName} website draft`,
+        content: JSON.stringify(project.pages),
+      }),
+    });
+    setLoading(null);
+
+    if (!response.ok) {
+      toast.error("Compliance review failed");
+      return;
+    }
+
+    const body = await response.json();
+    toast.success(body.data?.blocked ? "Compliance blocked delivery" : "Compliance review saved");
+    router.refresh();
+  }
+
+  async function prepareDelivery() {
+    if (!project) return;
+    setLoading("delivery");
+    const response = await fetch("/api/delivery/prepare", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        websiteProjectId: project.id,
+        leadId: project.leadId,
+        complianceApproved: true,
+        previewUrl: project.previewUrl || `/preview/${project.id}`,
+      }),
+    });
+    setLoading(null);
+
+    if (!response.ok) {
+      toast.error("Delivery prep failed");
+      return;
+    }
+
+    const body = await response.json();
+    if (body.data?.blocked) {
+      toast.error("Delivery blocked", { description: body.data.reason });
+      return;
+    }
+
+    toast.success("Delivery packet saved");
+    router.refresh();
+  }
 
   if (!project || !activePage) {
     return (
@@ -39,6 +144,23 @@ export function WebsitesView({ websiteProjects }: { websiteProjects: WebsiteProj
             <p className="mt-3 text-sm leading-6 text-zinc-400">
               Once a lead is sent to the website team, generated pages and previews will appear here.
             </p>
+            <div className="mt-5 flex max-w-xl flex-col gap-3 sm:flex-row">
+              <select
+                value={selectedLeadId}
+                onChange={(event) => setSelectedLeadId(event.target.value)}
+                className="h-10 flex-1 rounded-[8px] border border-white/10 bg-white/7 px-3 text-sm text-zinc-100 outline-none"
+              >
+                {leads.map((lead) => (
+                  <option key={lead.id} value={lead.id} className="bg-zinc-950">
+                    {lead.businessName}
+                  </option>
+                ))}
+              </select>
+              <Button disabled={loading === "generate" || !selectedLeadId} onClick={() => generateWebsite(selectedLeadId)}>
+                <Sparkles className="h-4 w-4" />
+                {loading === "generate" ? "Generating..." : "Generate Website"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -71,9 +193,9 @@ export function WebsitesView({ websiteProjects }: { websiteProjects: WebsiteProj
                 The MVP generates structured pages for Home, About, Services, Contact, FAQ, and a local landing page, then blocks delivery until QA and compliance pass.
               </p>
             </div>
-            <Button onClick={() => toast.success("Website agents queued", { description: "Intake, Builder 1, Builder 2, QA, and Compliance will run in order." })}>
+            <Button disabled={loading === "generate"} onClick={() => generateWebsite(project.leadId)}>
               <Sparkles className="h-4 w-4" />
-              Generate Website Draft
+              {loading === "generate" ? "Generating..." : "Generate Website Draft"}
             </Button>
           </div>
         </CardContent>
@@ -121,17 +243,17 @@ export function WebsitesView({ websiteProjects }: { websiteProjects: WebsiteProj
               <CardDescription>Move drafts through QA, compliance, and client preview.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-2">
-              <Button variant="secondary" onClick={() => toast.success("Marked ready for QA")}>
+              <Button variant="secondary" disabled={loading === "qa"} onClick={runQa}>
                 <FileCheck2 className="h-4 w-4" />
-                Mark Ready for QA
+                {loading === "qa" ? "Running QA..." : "Run QA Review"}
               </Button>
-              <Button variant="secondary" onClick={() => toast.info("Compliance review queued")}>
+              <Button variant="secondary" disabled={loading === "compliance"} onClick={runCompliance}>
                 <ShieldCheck className="h-4 w-4" />
-                Run Compliance Review
+                {loading === "compliance" ? "Reviewing..." : "Run Compliance Review"}
               </Button>
-              <Button onClick={() => toast.success("Client preview marked ready")}>
+              <Button disabled={loading === "delivery"} onClick={prepareDelivery}>
                 <Send className="h-4 w-4" />
-                Mark Client Preview Ready
+                {loading === "delivery" ? "Preparing..." : "Prepare Delivery"}
               </Button>
             </CardContent>
           </Card>
