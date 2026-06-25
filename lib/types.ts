@@ -53,6 +53,8 @@ export interface Lead {
   socialLinks: string[];
   currentWebsiteQualityScore: number;
   googlePresenceScore: number;
+  googleReviewCount?: number | null;
+  hasWebsite?: boolean;
   leadScore: number;
   status: LeadStatus;
   notes: string;

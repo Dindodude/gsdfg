@@ -21,6 +21,7 @@ interface GooglePlacesTextSearchResponse {
 }
 
 export interface FoundLead {
+  externalSourceId: string | null;
   businessName: string;
   industry: string;
   city: string;
@@ -35,6 +36,7 @@ export interface FoundLead {
   source: string;
   estimatedValue: number;
   reviewCount: number;
+  hasWebsite: boolean;
 }
 
 function inferCity(address: string | undefined, fallback: string) {
@@ -106,6 +108,7 @@ export async function findPlacesLeads(input: {
     const reviewCount = place.userRatingCount ?? 0;
 
     return {
+      externalSourceId: place.id ?? null,
       businessName,
       industry: input.industry,
       city: inferCity(place.formattedAddress, input.city),
@@ -128,6 +131,7 @@ export async function findPlacesLeads(input: {
       source: "Google Places Text Search",
       estimatedValue: leadScore >= 85 ? 6500 : leadScore >= 70 ? 4800 : 3200,
       reviewCount,
+      hasWebsite: Boolean(place.websiteUri),
     };
   });
 }

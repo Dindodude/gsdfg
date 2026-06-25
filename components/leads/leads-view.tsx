@@ -226,45 +226,55 @@ export function LeadsView({ leads, source }: { leads: Lead[]; source: "supabase"
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((lead) => (
-                    <tr
-                      key={lead.id}
-                      onClick={() => setSelectedLeadId(lead.id)}
-                      className={cn(
-                        "cursor-pointer border-t border-white/10 transition hover:bg-white/[0.045]",
-                        selectedLead.id === lead.id && "bg-emerald-300/[0.055]",
-                      )}
-                    >
-                      <td className="border-t border-white/8 px-5 py-4">
-                        <div className="max-w-[260px]">
-                          <p className="truncate text-sm font-medium text-zinc-100">{lead.businessName}</p>
-                          <p className="mt-1 truncate text-xs text-zinc-500">
-                            {lead.industry} - {lead.city}
-                          </p>
-                          <p className="mt-1 truncate text-xs text-zinc-600">{lead.source}</p>
-                        </div>
-                      </td>
-                      <td className="border-t border-white/8 px-5 py-4">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge className={scoreTone(lead.leadScore)}>Lead {lead.leadScore}</Badge>
-                          <Badge className="border-white/10 bg-white/6 text-zinc-300">Site {lead.currentWebsiteQualityScore}</Badge>
-                          <Badge className="border-white/10 bg-white/6 text-zinc-300">Google {lead.googlePresenceScore}</Badge>
-                        </div>
-                      </td>
-                      <td className="border-t border-white/8 px-5 py-4">
-                        <Badge className={statusTone(lead.status)}>{lead.status}</Badge>
-                      </td>
-                      <td className="border-t border-white/8 px-5 py-4">
-                        <Badge className={complianceTone(lead.complianceStatus)}>{lead.complianceStatus}</Badge>
-                      </td>
-                      <td className="border-t border-white/8 px-5 py-4">
-                        <p className="text-xs text-zinc-300">{lead.email}</p>
-                        <p className="mt-1 text-xs text-zinc-500">{lead.phone}</p>
-                      </td>
-                      <td className="border-t border-white/8 px-5 py-4 text-sm text-zinc-300">{formatDate(lead.nextFollowUpDate)}</td>
-                      <td className="border-t border-white/8 px-5 py-4 text-sm font-medium text-zinc-100">{formatCurrency(lead.estimatedValue)}</td>
-                    </tr>
-                  ))}
+                  {filtered.map((lead) => {
+                    const hasWebsite = lead.hasWebsite ?? Boolean(lead.websiteUrl);
+                    const reviewLabel =
+                      lead.googleReviewCount === null || lead.googleReviewCount === undefined
+                        ? `Google ${lead.googlePresenceScore}`
+                        : `${lead.googleReviewCount} reviews`;
+
+                    return (
+                      <tr
+                        key={lead.id}
+                        onClick={() => setSelectedLeadId(lead.id)}
+                        className={cn(
+                          "cursor-pointer border-t border-white/10 transition hover:bg-white/[0.045]",
+                          selectedLead.id === lead.id && "bg-emerald-300/[0.055]",
+                        )}
+                      >
+                        <td className="border-t border-white/8 px-5 py-4">
+                          <div className="max-w-[260px]">
+                            <p className="truncate text-sm font-medium text-zinc-100">{lead.businessName}</p>
+                            <p className="mt-1 truncate text-xs text-zinc-500">
+                              {lead.industry} - {lead.city}
+                            </p>
+                            <p className="mt-1 truncate text-xs text-zinc-600">{lead.source}</p>
+                          </div>
+                        </td>
+                        <td className="border-t border-white/8 px-5 py-4">
+                          <div className="flex flex-wrap gap-2">
+                            <Badge className={scoreTone(lead.leadScore)}>Lead {lead.leadScore}</Badge>
+                            <Badge className={hasWebsite ? "border-rose-300/30 bg-rose-500/15 text-rose-100" : "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"}>
+                              {hasWebsite ? "Has website" : "No website"}
+                            </Badge>
+                            <Badge className="border-white/10 bg-white/6 text-zinc-300">{reviewLabel}</Badge>
+                          </div>
+                        </td>
+                        <td className="border-t border-white/8 px-5 py-4">
+                          <Badge className={statusTone(lead.status)}>{lead.status}</Badge>
+                        </td>
+                        <td className="border-t border-white/8 px-5 py-4">
+                          <Badge className={complianceTone(lead.complianceStatus)}>{lead.complianceStatus}</Badge>
+                        </td>
+                        <td className="border-t border-white/8 px-5 py-4">
+                          <p className="text-xs text-zinc-300">{lead.email}</p>
+                          <p className="mt-1 text-xs text-zinc-500">{lead.phone}</p>
+                        </td>
+                        <td className="border-t border-white/8 px-5 py-4 text-sm text-zinc-300">{formatDate(lead.nextFollowUpDate)}</td>
+                        <td className="border-t border-white/8 px-5 py-4 text-sm font-medium text-zinc-100">{formatCurrency(lead.estimatedValue)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -33,6 +33,8 @@ export function mapLead(row: Row): Lead {
     socialLinks: stringArray(row.social_links),
     currentWebsiteQualityScore: Number(row.current_website_quality_score ?? 0),
     googlePresenceScore: Number(row.google_presence_score ?? 0),
+    googleReviewCount: row.google_review_count === null || row.google_review_count === undefined ? null : Number(row.google_review_count),
+    hasWebsite: Boolean(row.has_website ?? row.website_url),
     leadScore: Number(row.lead_score ?? 0),
     status: String(row.status ?? "New") as Lead["status"],
     notes: String(row.notes ?? ""),

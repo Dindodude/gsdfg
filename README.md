@@ -53,6 +53,7 @@ Current lead finder targeting:
 - 100-200 Google reviews.
 - No website returned by Google Places.
 - Not permanently closed.
+- Stores `google_review_count`, `has_website`, and Google place ID metadata for dedupe/filtering.
 
 Because no-website leads do not have a website to crawl, email enrichment is a separate step. `/api/leads/enrich-email` can scrape public emails from a lead's website/contact pages when a URL exists. For strict no-website leads, connect a dedicated enrichment provider later, such as Apollo, Hunter, Clay, or a SERP/contact-data API.
 
@@ -86,10 +87,11 @@ TWILIO_FROM_NUMBER=...
 2. Run `supabase/migrations/001_initial_schema.sql`.
 3. Run `supabase/migrations/002_user_profile_insert_policy.sql`.
 4. Run `supabase/migrations/003_suppression_and_email_events.sql`.
-5. Add Supabase environment variables to `.env.local` and Vercel.
-6. Restart the local dev server.
-7. Visit `/login` and create/sign in to an account.
-8. Optionally adapt `supabase/seed.sql` with a real user id to add starter leads/agents.
+5. Run `supabase/migrations/004_lead_targeting_metadata.sql`.
+6. Add Supabase environment variables to `.env.local` and Vercel.
+7. Restart the local dev server.
+8. Visit `/login` and create/sign in to an account.
+9. Optionally adapt `supabase/seed.sql` with a real user id to add starter leads/agents.
 
 The schema includes:
 

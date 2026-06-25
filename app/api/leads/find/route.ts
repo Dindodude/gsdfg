@@ -44,6 +44,13 @@ export async function POST(request: Request) {
 
     const foundLeads = await findPlacesLeads(payload);
 
+    await supabase
+      .from("leads")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("source", "Google Places Text Search")
+      .not("notes", "ilike", "%Target match: 100-200 reviews and no website%");
+
     if (foundLeads.length === 0) {
       return ok({
         found: 0,
@@ -54,7 +61,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from("leads")
-      .insert(
+      .upsert(
         foundLeads.map((lead) => ({
           user_id: user.id,
           business_name: lead.businessName,
@@ -66,6 +73,9 @@ export async function POST(request: Request) {
           social_links: lead.socialLinks,
           current_website_quality_score: lead.currentWebsiteQualityScore,
           google_presence_score: lead.googlePresenceScore,
+          google_review_count: lead.reviewCount,
+          has_website: lead.hasWebsite,
+          external_source_id: lead.externalSourceId,
           lead_score: lead.leadScore,
           status: "New",
           notes: lead.notes,
@@ -73,6 +83,7 @@ export async function POST(request: Request) {
           compliance_status: "Pending",
           estimated_value: lead.estimatedValue,
         })),
+        { onConflict: "user_id,source,external_source_id" },
       )
       .select("*");
 
