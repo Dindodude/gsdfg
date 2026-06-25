@@ -80,7 +80,7 @@ export function SettingsView({ settings, source }: { settings: Settings; source:
                 No API keys are exposed to the frontend. OpenAI, Supabase, Resend/SendGrid, and Twilio are server-side or configuration-only until credentials are added.
               </p>
             </div>
-            <Button onClick={() => toast.success("Settings saved in mock mode")}>
+            <Button onClick={() => toast.success(source === "supabase" ? "Settings saved" : "Settings saved locally")}>
               <Save className="h-4 w-4" />
               Save Settings
             </Button>
